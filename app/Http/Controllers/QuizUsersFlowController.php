@@ -6,8 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\QuizUsersFlow;
 use App\Models\QuizQuestion;
 use App\Models\QuizAnswer;
+use App\Models\QuizAnswerUsersFlow;
 
-class QuizUserFlowController extends Controller
+class QuizUsersFlowController extends Controller
 {
 	private $userId;
 	private $quiz;
@@ -34,7 +35,7 @@ class QuizUserFlowController extends Controller
 		
 		foreach ($aSettings as $a) {
 			$answers[$a->id] = $a;
-			$neededScore += $a->score;
+			$neededScore += $a['score'];
 		}
 		
 		$qCount = QuizQuestion::where('quiz_id', $quizId)->count();
@@ -68,7 +69,6 @@ class QuizUserFlowController extends Controller
 	
 	public static function getCurrent($userId, $quizId)
 	{
-		dd($quizId);
 		return QuizUsersFlow::where('quiz_id', $quizId)->where('user_id', $userId)->get();
 	}
 	

@@ -11,6 +11,19 @@
 |
 */
 
+/*Route::get('/', function () {
+    //return view('welcome');
+	return 'Главная страница';
+});*/
+
+/*Route::get('/', ['uses' => 'NameController@index', 
+				 'as' => 'home']);
+Route::get('message/{id}/edit', ['uses' => 'NameController@edit', 
+				 'as' => 'message.edit'])->where(['id'=>'[0-9]+']);*/
+/*Route::post(); //POST-requests
+Route::get(); //GET-requests
+Route::delete(); //DELETE-requests
+*/
 //Auth::routes();
 
 Route::group(['middleware' => 'web'], function () {
@@ -27,6 +40,10 @@ Route::group(['middleware' => 'web'], function () {
 	Route::get('/home', 'HomeController@index')->name('home');
 
 	Route::post('home', 'HomeController@store');
+	
+	
+	Route::get('/quizcomplete', 'QuizUsersFlowController@quizcomplete')->name('quizcomplete');
+	Route::post('quizcomplete', 'QuizUsersFlowController@quizcomplete');
 
    /* Route::group(['prefix'=>'admin',  'middleware' => 'admin'], function(){
         Route::get('/', function(){

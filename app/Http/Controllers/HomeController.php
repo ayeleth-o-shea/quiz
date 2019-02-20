@@ -9,6 +9,7 @@ use App\Models\QuizAnswer;
 use App\Models\QuizAnswerUsersFlow;
 use App\Models\QuizUsersFlow;
 use App\Http\Controllers\QuizUsersFlowController;
+use App\Http\Controllers\QuizAnswerUsersFlowController;
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
@@ -63,6 +64,15 @@ class HomeController extends Controller
         return view('home', $data);
     }
 	
+	public function quizcomplete()
+	{
+		$data['result'] = 'Success!';
+		$data['score'] = '30';
+		$data['pageTitle'] = $this->pageTitle;
+		
+		return view('quizcomplete', $data);
+	}
+	
 	public function store(Request $request)
     {
 	  if ($request->get('quiz_id'))
@@ -73,56 +83,52 @@ class HomeController extends Controller
 		  
 		  $user = Auth::user();
 		  
-		  $aFlow = new QuizAnswerUsersFlow([
+		  $aData = [
 				'user_id' => $user->id,
 				'quiz_id' => $request->get('quiz_id'),
 				'answer_id'=> $request->get('answer'),
 				'question_id'=> $request->get('question_id')
-		  ]);
-		  $aFlow->save();
+		  ];
+		  
+		  $curQuestion = QuizAnswerFlowController::getCurrent($request->get('question_id'), $user->id);
+		  
+		  if ($curQuestion instanceof QuizAnswerUsersFlow) {
+			  $qId = $curQuestion->id;
+			  QuizAnswerFlowController::update($aData, $qId);
+			  
+		  } else {
+			  
+				$aFlow = new QuizAnswerUsersFlow($aData);
+				$aFlow->save();
+		  }
 		  
 		  $userQuizFlow = QuizUsersFlowController::getUserFlowState($request->get('quiz_id'), $user->id);
 
-		  //dd($userQuizFlow);	
-		  
-		  if ($userQuizFlow['isFirstQuestion'] == 1) {
-			  $arData = [
+		  $fData = [
 					'user_id' => $user->id,
 					'quiz_id' => $request->get('quiz_id'),
 					'time'=> '',
 					'is_complete'=> $userQuizFlow['isComplete'],
 					'result' => $userQuizFlow['result'],
-					'final_score' => $userQuizFlow['total_score'],
+					'final_score' => $userQuizFlow['totalScore'],
 					'last_question' => $request->get('question_id'),
 					'session' => $request->session()->get('id')
-			  ];
-				
+			];	
+		  
+		  if ($userQuizFlow['isFirstQuestion'] != 1) {
+			 $curFlow = QuizUsersFlowController::getCurrent($request->get('quiz_id'), $user->id);
+
+			  if ($curFlow instanceof QuizUsersFlow){
+				  $flowId = $curFlow->id;
+				  QuizUsersFlowController::update($fData, $flowId);
+			  } 	
 		  } else {
-			  $curFlow = QuizUsersFlowController::getCurrent($request->get('quiz_id'), $user->id);
-			  if (count($curFlow) > 0){
-				  dd($curFlow);
-				 //$flowId = $curFlow->id;
-				  QuizUsersFlowController::update($request, $flowId);
-				  $this->redirectTo = '/quizcomplete';
-			  } else {
-				  $arData = [
-						'user_id' => $user->id,
-						'quiz_id' => $request->get('quiz_id'),
-						'time'=> '',
-						'is_complete'=> $userQuizFlow['isComplete'],
-						'result' => $userQuizFlow['result'],
-						'final_score' => $userQuizFlow['totalScore'],
-						'last_question' => $request->get('question_id'),
-						'session' => $request->session()->get('id')
-				  ];
-			  }
-				
+			  $tFlow = new QuizUsersFlow($fData);
+			  $tFlow->save();
 		  }
 		  
-		  $tFlow = new QuizUsersFlow($arData);
-		  $tFlow->save();
-		  
 		  if ($userQuizFlow['isLastQuestion'] == 1) {
+			   $this->redirectTo = '/quizcomplete';
 			   return redirect($this->redirectTo)->with('end', 'The quiz is done');
 		  } else {
 			  $pageNum = (int)$request->get('page');
